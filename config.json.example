@@ -1,0 +1,11 @@
+{
+  "db_host" : "localhost",
+  "db_password" : "root",
+  "db_user" : "root",
+  "db_database" : "prof_oak",
+  "prefix": "!",
+  "discord_token": "DISCORD TOKEN"
+  "single_channel": false,
+  "single_channel_name": "bot-commands",
+    "delete_user_message": false
+}
