@@ -1,13 +1,13 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-let mysql = require('mysql');
 const config = require("./config.json");
+let utils = require("./utils.js");
 let pokemon = [];
 let pokemon_id = [];
 let prefix = config.prefix;
 
 client.on('ready', () => {
-    loadPokemonArray(createDbConnect(), 'SELECT * FROM pokedex');
+    loadPokemonArray(utils.createDbConnect(), 'SELECT * FROM pokedex');
     if (config.single_channel){
         if(config.single_channel_name){
             console.log('Run only in ' + config.single_channel_name)
@@ -48,17 +48,17 @@ function listeners(message) {
     if (messageContent.startsWith(config.prefix)) {
 
         if ((pokemon.indexOf(messageContent.split(config.prefix)[1].toLowerCase()) > -1)) {
-            sendPokemonDetails(createDbConnect(), message);
+            sendPokemonDetails(utils.createDbConnect(), message);
             deleteMessage(message);
         } else if ((pokemon_id.indexOf(parseInt(messageContent.split(config.prefix)[1])) > -1)) {
-            sendPokemonDetails(createDbConnect(), message);
+            sendPokemonDetails(utils.createDbConnect(), message);
             deleteMessage(message);
         }
         else if (messageContent.startsWith(prefix+ "egg ")) {
             let split = messageContent.split(prefix+ "egg ");
             if (pokemon.indexOf(split[1]) > -1) {
                 console.log("Get specific details")
-                getSingleMonEgg(createDbConnect(), split[1], message);
+                getSingleMonEgg(utils.createDbConnect(), split[1], message);
             } else if (split[1].match("(2|5|10)(km)?")) {
                 let distance;
                 if (split[1].endsWith("km")) {
@@ -67,7 +67,7 @@ function listeners(message) {
                     distance = split[1];
                 }
                 console.log(`Get distance ${distance} chart`);
-                getDistanceChart(createDbConnect(), distance, message);
+                getDistanceChart(utils.createDbConnect(), distance, message);
 
             }
             else {
@@ -78,10 +78,10 @@ function listeners(message) {
             let split = messageContent.split(prefix+ "boss ");
             if (pokemon.indexOf(split[1]) > -1) {
                 console.log("Specifc Mon Boss Details")
-                getSingleBoss(createDbConnect(),split[1],message);
+                getSingleBoss(utils.createDbConnect(),split[1],message);
             } else if (split[1].match("[1-5]")) {
                 console.log("Tier Boss List")
-                getBossTierList(createDbConnect(),split[1],message);
+                getBossTierList(utils.createDbConnect(),split[1],message);
             }
         }
     }
@@ -424,22 +424,7 @@ function getBossTierList(connection, level, message) {
         console.log("Database connection closed")
     }
 
-    function createDbConnect() {
-        let connection = mysql.createConnection(
-            {
-                host: config.db_host,
-                user: config.db_user,
-                password : config.db_password,
-                database: config.db_database,
-                multipleStatements: true
-            }
-        );
-        connection.connect(function (err) {
-            if (err) throw err;
-            console.log("Database connected");
-        });
-        return connection;
-    }
+
 
     function loadPokemonArray(connection, query) {
 

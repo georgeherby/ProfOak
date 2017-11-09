@@ -62,5 +62,6 @@ typings/
 # WebStorm Files
 .idea/
 /raw/
-/config.json
 /sql/
+/wiki/
+/ProfOak.wiki/
