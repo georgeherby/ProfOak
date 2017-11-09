@@ -2,6 +2,8 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require("./config.json");
 let utils = require("./utils.js");
+let appraisal = require("./appraisal.js");
+
 let pokemon = [];
 let pokemon_id = [];
 let prefix = config.prefix;
@@ -25,7 +27,14 @@ client.on('ready', () => {
 
 client.on('message', message => {
 
-    if (config.single_channel && (message.channel.name === config.single_channel_name)){
+    if (message.channel.type === 'dm'){
+        let reg = new RegExp('!iv [0-9]+ [0-9]+');
+
+        if (message.content.match(reg)) {
+            let split = message.content.split(" ");
+            appraisal.getPokemonIv(split[1],message,split[2],3504)
+        }
+    }else if (config.single_channel && (message.channel.name === config.single_channel_name)){
         listeners(message);
     }else if (!config.single_channel){
         listeners(message);
