@@ -32,7 +32,8 @@ client.on('message', message => {
 
         if (message.content.match(reg)) {
             let split = message.content.split(" ");
-            appraisal.getPokemonIv(split[1],message,split[2],3504)
+            //!iv 9000 154 3504 dragonite
+            appraisal.getPokemonIv(message,split[1],split[2],split[3],split[4])
         }
     }else if (config.single_channel && (message.channel.name === config.single_channel_name)){
         listeners(message);
@@ -42,15 +43,6 @@ client.on('message', message => {
         console.log("No Output Channel")
     }
 });
-/*
-function sendMessage(message, content){
-    if (config.single_channel){
-        message.guild.channels.find('name', config.single_channel_name).send(content)
-    }else{
-        message.channel.send(content)
-    }
-}
-*/
 
 function listeners(message) {
     let messageContent = message.content.toLowerCase();

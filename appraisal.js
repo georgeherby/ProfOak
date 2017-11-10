@@ -3,22 +3,34 @@ let utils = require("./utils.js");
 module.exports = {
 
 
-    getPokemonIv: function (stardust, message, hp,cp) {
+    getPokemonIv: function (message, stardust, hp,cp,pokemon) {
         let query = `SELECT level, cp_multiplier FROM pokemon_level where stardust = '${stardust}'`;
         let connection = utils.createDbConnect();
         let levels = [];
         let possible_combinations = [];
 
-        connection.query(query, (err, rows) => {
-            for (let i in rows) {
+        connection.query(query, (err, levelInfo) => {
+
+            let base_defence, base_attack, base_staminia = 0;
+            let queryDetails = `SELECT pg_attack,pg_defence,pg_stamina FROM pokedex where name = ${pokemon} and in_game > 0`;
+            connection.query(queryDetails, (err,stats) =>{
+                for (let j in stats) {
+                    base_defence = stats[j].pg_defence;
+                    base_staminia = stats[j].pg_staminia;
+                    base_attack = stats[j].pg_attack;
+                }
+
+
+
+            for (let i in levelInfo) {
                 // All possible pokemon levels
-                //TODO Get Pokemon Base stats
-                let ind_sta = getIndStaminaFromHP(hp,rows[i].cp_multiplier,182);
-                console.log(`Level: ${rows[i].level} -  Sta IV: ${ind_sta}`);
+                let ind_sta = getIndStaminaFromHP(hp,levelInfo[i].cp_multiplier,base_staminia);
+                console.log(`Level: ${levelInfo[i].level} -  Sta IV: ${ind_sta}`);
                 if (ind_sta <=15.0){
-                    levels.push([rows[i].level, ind_sta,rows[i].cp_multiplier])
+                    levels.push([levelInfo[i].level, ind_sta,levelInfo[i].cp_multiplier])
                 }
             }
+
 
 
             levels.forEach(function (value){
@@ -27,7 +39,7 @@ module.exports = {
                 console.log(value[2]);
 
                 for (let def = 0;def <= 15; def++){
-                    let ind_att = getIndAttack(cp,201,def,182,value[1],value[2],263);
+                    let ind_att = getIndAttack(cp,base_defence,def,base_staminia,value[1],value[2],base_attack);
                     if (ind_att <= 15) {
                         console.log(ind_att);
                         possible_combinations.push([value[1],def,ind_att])
@@ -44,6 +56,7 @@ module.exports = {
             });
 
 
+            });
         });
     }
 }
