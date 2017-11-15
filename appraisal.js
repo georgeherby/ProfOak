@@ -3,7 +3,7 @@ let utils = require("./utils.js");
 module.exports = {
 
 
-    getPokemonIv: function (message, stardust, hp,cp,pokemon) {
+    getPokemonIv: function (message, stardust, hp,cp,pokemon, client) {
         let query = `SELECT level, cp_multiplier FROM pokemon_level where stardust = '${stardust}'`;
         let queryDetails = `SELECT pg_attack,pg_def,pg_stamina FROM pokedex where name = '${pokemon}' and in_game > 0`;
 
@@ -78,7 +78,8 @@ module.exports = {
 
             });
     }
-}
+};
+
 
 function isCorrectCP(base_hp, inv_hp, base_def, inv_def, base_att, inv_att, cp_multi, cp){
     //(Attack * Defense^0.5 * Stamina^0.5 * CP_Multiplier^2) / 10

@@ -18,7 +18,7 @@ client.on('ready', () => {
             process.exit();
         }
     }else{
-        console.log('All channel')
+        console.log('All channel');
         if (config.single_channel_name){
             console.log('You specified a single channel but single_channel needs to be true in config file so allowing output from all channels...')
         }
@@ -33,7 +33,7 @@ client.on('message', message => {
         if (message.content.match(reg)) {
             let split = message.content.split(" ");
             //!iv 9000 154 3504 dragonite
-            appraisal.getPokemonIv(message,split[1],split[2],split[3],split[4])
+            appraisal.getPokemonIv(message,split[1],split[2],split[3],split[4],client)
         }
     }else if (config.single_channel && (message.channel.name === config.single_channel_name)){
         listeners(message);
@@ -87,73 +87,68 @@ function listeners(message) {
         }
     }
 }
-    function deleteMessage(message) {
-        if (config.delete_user_message === true){
-            message.delete();
+function deleteMessage(message) {
+    if (config.delete_user_message === true){
+        message.delete();
+    }
+}
+
+function getSingleMonEgg(connection, pokeName, message) {
+    let query = `SELECT * FROM pokedex LEFT JOIN eggs on eggs.dex_id = pokedex.dex_id where pokedex.name = '${pokeName}'`;
+    connection.query(query, (err, rows) => {
+        let embed;
+        let notInGame = false;
+        let notInEgg = false;
+        for (let i in rows){
+
+            if(rows[i].in_game  > 0 && rows[i].is_egg ===1) {
+                embed = new Discord.RichEmbed().setTitle(`${rows[i].name}`);
+                let imageID;
+                switch(rows[i].dex_id.length) {
+                    case 1:
+                        imageID = "00"+rows[i].dex_id;
+                        break;
+                    case 2:
+                        imageID = "0"+rows[i].dex_id;
+                        break;
+                    case 3:
+                        imageID = rows[i].dex_id;
+                        break;
+                    default:
+                        imageID = rows[i].dex_id;
+                }
+
+                embed.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
+                embed.setDescription(`${rows[i].distance}km\n${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`);
+                message.channel.send(embed);
+            }else{
+                //TODO Fix error message - issues with mega types
+                /*if (rows[i].in_game === 0 ){
+                    notInGame = true;
+                }else{
+                    if (rows[i].is_egg !==1){
+                        notInEgg = true;
+                    }
+                }
+                */
+
+            }
         }
 
-    }
-
-    function getSingleMonEgg(connection, pokeName, message) {
-
-
-        let query = `SELECT * FROM pokedex LEFT JOIN eggs on eggs.dex_id = pokedex.dex_id where pokedex.name = '${pokeName}'`;
-        connection.query(query, (err, rows) => {
-            let embed;
-            let notInGame = false;
-            let notInEgg = false;
-            for (let i in rows){
-
-                if(rows[i].in_game  > 0 && rows[i].is_egg ===1) {
-                    embed = new Discord.RichEmbed().setTitle(`${rows[i].name}`);
-                    let imageID;
-                    switch(rows[i].dex_id.length) {
-                        case 1:
-                            imageID = "00"+rows[i].dex_id;
-                            break;
-                        case 2:
-                            imageID = "0"+rows[i].dex_id;
-                            break;
-                        case 3:
-                            imageID = rows[i].dex_id;
-                            break;
-                        default:
-                            imageID = rows[i].dex_id;
-                    }
-
-                    embed.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
-                    embed.setDescription(`${rows[i].distance}km\n${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`);
-                    message.channel.send(embed);
-                }else{
-                    //TODO Fix error message - issues with mega types
-                    /*if (rows[i].in_game === 0 ){
-                        notInGame = true;
-                    }else{
-                        if (rows[i].is_egg !==1){
-                            notInEgg = true;
-                        }
-                    }
-                    */
-
-                }
+        if (notInGame === true || notInEgg ===true){
+            if (notInGame){
+                message.channel.send("This pokemon is not in the game!");
             }
-
-            if (notInGame === true || notInEgg ===true){
-                if (notInGame){
-                    message.channel.send("This pokemon is not in the game!");
-                }
-                if (notInEgg){
-                    message.channel.send("This pokemon is not in eggs");
-                }
+            if (notInEgg){
+                message.channel.send("This pokemon is not in eggs");
             }
+        }
 
-        });
+    });
 
-    }
+}
 
 function getSingleBoss(connection, pokeName, message) {
-
-
     let query = `SELECT dex_id,name, capture_rate * 100 AS capture_rate,level_20_min, level_20_max, is_raid, IFNULL(weakness, "None") as weakness,IFNULL(double_weakness, "None") as double_weakness,IFNULL(resistance, "None") as resistance,IFNULL(double_resistance, "None") as double_resistance FROM pokedex where pokedex.name = '${pokeName}' AND in_game > 0`;
     connection.query(query, (err, rows) => {
         let embed;
@@ -185,8 +180,8 @@ function getSingleBoss(connection, pokeName, message) {
             }
         }
     });
-
 }
+
 function getBossTierList(connection, level, message) {
     let query = `SELECT name, capture_rate * 100 AS capture_rate,level_20_min, level_20_max,is_raid  FROM pokedex where raid_level = ${level} ORDER BY is_raid,NAME ASC`;
     let embed = new Discord.RichEmbed().setTitle(`Tier ${level} Raid Bosses`);
@@ -216,240 +211,210 @@ function getBossTierList(connection, level, message) {
 }
 
 
-    function getDistanceChart(connection, distance, message) {
-        let query = `SELECT * FROM eggs JOIN pokedex on eggs.dex_id = pokedex.dex_id where distance = ${distance} AND in_game >0`;
-        let embed = new Discord.RichEmbed().setTitle(`${distance}km Egg Chart`);
-        connection.query(query, (err, rows) => {
+function getDistanceChart(connection, distance, message) {
+    let query = `SELECT * FROM eggs JOIN pokedex on eggs.dex_id = pokedex.dex_id where distance = ${distance} AND in_game >0`;
+    let embed = new Discord.RichEmbed().setTitle(`${distance}km Egg Chart`);
+    connection.query(query, (err, rows) => {
 
-            let unsent = false;
-            let limit = 25;
-            for (let i in rows) {
-                if (i < limit) {
-                    embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
-                    unsent = true;
-                }else if (parseInt(i) === limit){
-                    message.channel.send(embed);
-                    limit = limit + 25;
-                    embed = new Discord.RichEmbed().setTitle(`${distance}km Egg Chart cont.`);
-                    embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
-                    unsent = true;
-                }else{
-                    embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
-                    unsent = true;
+        let unsent = false;
+        let limit = 25;
+        for (let i in rows) {
+            if (i < limit) {
+                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
+                unsent = true;
+            }else if (parseInt(i) === limit){
+                message.channel.send(embed);
+                limit = limit + 25;
+                embed = new Discord.RichEmbed().setTitle(`${distance}km Egg Chart cont.`);
+                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
+                unsent = true;
+            }else{
+                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
+                unsent = true;
+            }
+        }
+        if (unsent){
+            message.channel.send(embed);
+        }
+    });
+}
+function sendPokemonDetails(connection, message) {
+    let reg = new RegExp('^[0-9]+$');
+    let query= null;
+    let evo_query = null;
+
+    if (message.content.split(config.prefix)[1].match(reg)){
+        let dexID = parseInt(message.content.split(config.prefix)[1], 10);
+        query = `SELECT * FROM pokedex dex LEFT JOIN pokemon_moves mapping on dex.dex_id = mapping.pokemon_id LEFT JOIN moves ON moves.move_id = mapping.move_id LEFT Join in_game game ON dex.in_game = game.in_game where dex.dex_id ='${dexID}' ORDER BY form asc`;
+        evo_query = `SELECT family,name,evolution_stage,generation FROM pokedex where family in (SELECT DISTINCT family FROM pokedex where dex_id ='${dexID}' AND form IS NULL) ORDER BY family, evolution_stage`;
+    }else{
+        query = `SELECT * FROM pokedex dex LEFT JOIN pokemon_moves mapping on dex.dex_id = mapping.pokemon_id LEFT JOIN moves ON moves.move_id = mapping.move_id LEFT Join in_game game ON dex.in_game = game.in_game where dex.name ='${message.content.split(config.prefix)[1].toLowerCase()}' ORDER BY form asc`;
+        evo_query = `SELECT family,name,evolution_stage,generation FROM pokedex dex where family in (SELECT FAMILY FROM pokedex where name = '${message.content.split(config.prefix)[1].toLowerCase()}' AND form is null) ORDER BY family, evolution_stage`;
+    }
+
+    let messageToSend = '';
+    let cMoves, qMoves;
+    let messageEmded = new Discord.RichEmbed();
+    query = query+'; '+evo_query;
+    console.log(query);
+    connection.query(query, function(err, results){
+        if (err) throw err;
+        let lastForm;
+        let rows = results[0];
+        for (let i in rows){
+            messageEmded.title = `No: ${rows[i].dex_id} - ${rows[i].name}`;
+            let imageID;
+            let length = rows[i].dex_id.toString().length;
+            switch(length) {
+                case 1:
+                    imageID = "00"+rows[i].dex_id;
+                    break;
+                case 2:
+                    imageID = "0"+rows[i].dex_id;
+                    break;
+                case 3:
+                    imageID = rows[i].dex_id;
+                    break;
+                default:
+                    imageID = rows[i].dex_id;
+            }
+
+            messageEmded.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
+            if (rows[i].form === null) {
+                //Base Form
+                lastForm = rows[i].form;
+                messageToSend = `__**Base Form (${rows[i].game_status})**__`;
+            }else{
+                //Special Forms
+                if (lastForm !== rows[i].form) {
+                    messageToSend = `${messageToSend}\n\n__**${rows[i].form} (${rows[i].game_status})**__`;
                 }
             }
-            if (unsent){
-                message.channel.send(embed);
-            }
-        });
-    }
-    function sendPokemonDetails(connection, message) {
-        let reg = new RegExp('^[0-9]+$');
-        let query= null;
-        let evo_query = null;
 
-        if (message.content.split(config.prefix)[1].match(reg)){
-            let dexID = parseInt(message.content.split(config.prefix)[1], 10);
-            query = `SELECT * FROM pokedex dex LEFT JOIN pokemon_moves mapping on dex.dex_id = mapping.pokemon_id LEFT JOIN moves ON moves.move_id = mapping.move_id LEFT Join in_game game ON dex.in_game = game.in_game where dex.dex_id ='${dexID}' ORDER BY form asc`;
-            evo_query = `SELECT family,name,evolution_stage,generation FROM pokedex where family in (SELECT DISTINCT family FROM pokedex where dex_id ='${dexID}' AND form IS NULL) ORDER BY family, evolution_stage`;
-        }else{
-            query = `SELECT * FROM pokedex dex LEFT JOIN pokemon_moves mapping on dex.dex_id = mapping.pokemon_id LEFT JOIN moves ON moves.move_id = mapping.move_id LEFT Join in_game game ON dex.in_game = game.in_game where dex.name ='${message.content.split(config.prefix)[1].toLowerCase()}' ORDER BY form asc`;
-            evo_query = `SELECT family,name,evolution_stage,generation FROM pokedex dex where family in (SELECT FAMILY FROM pokedex where name = '${message.content.split(config.prefix)[1].toLowerCase()}' AND form is null) ORDER BY family, evolution_stage`;
+            if (!(rows[i].type_1 === null)){
+                if (lastForm !== rows[i].form ||rows[i].form ===null ) {
+                    messageToSend = `${messageToSend}\n**Types:** ${rows[i].type_1}${rows[i].type_2 === null ? `` : `/${rows[i].type_2}`}`;
+                }
+            }
+
+            if (!(rows[i].pg_stamina === null && rows[i].pg_def === null && rows[i].pg_attack === null )) {
+                messageToSend = `${messageToSend}\n**Sta:** ${rows[i].pg_stamina} **Att:** ${rows[i].pg_attack} **Def:** ${rows[i].pg_def}`;
+
+                if(rows[i].in_game !== 0){
+                    messageToSend = `${messageToSend}\n**Max CP (Lvl 40):** ${rows[i].level_40_max}\n**Buddy Distance:** ${rows[i].buddy}km`;
+                }
+
+                if (!(rows[i].move_type === null)) {
+                    if (rows[i].move_type === 'C') {
+                        if (cMoves === undefined) {
+                            cMoves = rows[i].move_name;
+                        } else {
+                            cMoves = `${cMoves}, ${rows[i].move_name}`;
+                        }
+                    }
+                    if (rows[i].move_type === 'Q') {
+                        if (qMoves === undefined) {
+                            qMoves = rows[i].move_name;
+                        }
+                        else {
+                            qMoves = `${qMoves}, ${rows[i].move_name}`;
+                        }
+                    }
+                    if (lastForm !== rows[i].form ||rows[i].form ===null) {
+                        messageToSend = `${messageToSend}\n**Quick Moves:** ${qMoves}\n**Charge Moves:** ${cMoves}`;
+                    }
+                }
+            }else {
+                if ((lastForm !== rows[i].form || rows[i].form === null)) {
+
+                    messageToSend = `${messageToSend}\n__Main Game Stats (Not PoGo)__\n**Sta:** ${rows[i].base_hp} **Att:** ${rows[i].base_attack} **Def:** ${rows[i].base_defense}`
+                }
+            }
+            lastForm = rows[i].form;
+        }
+        messageToSend = messageToSend+'\n\n__**Evolutions**__';
+        let level1, level2, level3;
+        rows = results[1];
+        let oldFamily;
+        for (let i in rows) {
+            switch(rows[i].evolution_stage){
+                case(1):
+                    if (level1 === undefined){
+                        level1 = rows[i].name+ ` (Gen ${rows[i].generation})`;
+                    }else{
+                        level1 = level1+'\n'+rows[i].name+ ` (Gen ${rows[i].generation})`;
+                    }
+                    break;
+                case(2):
+                    if (level2 === undefined){
+                        level2 = rows[i].name+ ` (Gen ${rows[i].generation})`;
+                    }else{
+                        level2 = level2+'\n'+rows[i].name+ ` (Gen ${rows[i].generation})`;
+                    }
+                    break;
+                case(3):
+                    if (level3 === undefined){
+                        level3 = rows[i].name+ ` (Gen ${rows[i].generation})`;
+                    }else{
+                        level3 = level3+'\n'+rows[i].name+ ` (Gen ${rows[i].generation})`;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            oldFamily = rows[i].family;
+        }
+        if (level1 !== undefined){
+            if (level3 === undefined && level2===undefined) {
+                messageEmded.addField("Only Evolution", level1,false)
+            }else{
+                messageEmded.addField("Base Evolution", level1,false)
+            }
+        }
+        if (level2 !== undefined){
+            if (level3 === undefined) {
+                messageEmded.addField("Top Evolution", level2,false)
+            }else{
+                messageEmded.addField("Middle Evolution", level2,false)
+            }
 
         }
+        if (level3 !== undefined){
+            messageEmded.addField("Top Evolution", level3,false)
+        }
+        console.log(messageToSend);
 
-        let messageToSend = '';
-        let cMoves, qMoves;
-        let messageEmded = new Discord.RichEmbed();
-        query = query+'; '+evo_query;
-        console.log(query);
-        connection.query(query, function(err, results){
-            if (err) throw err;
-            let lastForm;
-            let rows = results[0];
-            for (let i in rows){
-                messageEmded.title = `No: ${rows[i].dex_id} - ${rows[i].name}`;
-                let imageID;
-                let length = rows[i].dex_id.toString().length;
-                switch(length) {
-                    case 1:
-                        imageID = "00"+rows[i].dex_id;
-                        break;
-                    case 2:
-                        imageID = "0"+rows[i].dex_id;
-                        break;
-                    case 3:
-                        imageID = rows[i].dex_id;
-                        break;
-                    default:
-                        imageID = rows[i].dex_id;
-                }
+        messageEmded.description = messageToSend;
 
-                messageEmded.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
-                if (rows[i].form === null) {
-                    //Base Form
-                    lastForm = rows[i].form;
-                    messageToSend = `__**Base Form (${rows[i].game_status})**__`;
-                }else{
-                    //Special Forms
-                    if (lastForm !== rows[i].form) {
-                        messageToSend = `${messageToSend}\n\n__**${rows[i].form} (${rows[i].game_status})**__`;
-                    }
-                }
-
-                if (!(rows[i].type_1 === null)){
-                    if (lastForm !== rows[i].form ||rows[i].form ===null ) {
-                        messageToSend = `${messageToSend}\n**Types:** ${rows[i].type_1}${rows[i].type_2 === null ? `` : `/${rows[i].type_2}`}`;
-                    }
-                }
-
-                if (!(rows[i].pg_stamina === null && rows[i].pg_def === null && rows[i].pg_attack === null )) {
-                    messageToSend = `${messageToSend}\n**Sta:** ${rows[i].pg_stamina} **Att:** ${rows[i].pg_attack} **Def:** ${rows[i].pg_def}`;
-
-                    if(rows[i].in_game !== 0){
-                        messageToSend = `${messageToSend}\n**Max CP (Lvl 40):** ${rows[i].level_40_max}\n**Buddy Distance:** ${rows[i].buddy}km`;
-                    }
-
-                    if (!(rows[i].move_type === null)) {
-                        if (rows[i].move_type === 'C') {
-                            if (cMoves === undefined) {
-                                cMoves = rows[i].move_name;
-                            } else {
-                                cMoves = `${cMoves}, ${rows[i].move_name}`;
-                            }
-                        }
-                        if (rows[i].move_type === 'Q') {
-                            if (qMoves === undefined) {
-                                qMoves = rows[i].move_name;
-                            }
-                            else {
-                                qMoves = `${qMoves}, ${rows[i].move_name}`;
-                            }
-                        }
-                        if (lastForm !== rows[i].form ||rows[i].form ===null) {
-                            messageToSend = `${messageToSend}\n**Quick Moves:** ${qMoves}\n**Charge Moves:** ${cMoves}`;
-                        }
-                    }
-                }else {
-                    if ((lastForm !== rows[i].form || rows[i].form === null)) {
-
-                        messageToSend = `${messageToSend}\n__Main Game Stats (Not PoGo)__\n**Sta:** ${rows[i].base_hp} **Att:** ${rows[i].base_attack} **Def:** ${rows[i].base_defense}`
-                    }
-                }
-
-                lastForm = rows[i].form;
-            }
-            messageToSend = messageToSend+'\n\n__**Evolutions**__';
-            let level1, level2, level3;
-            rows = results[1];
-            let oldFamily;
-            for (let i in rows) {
-                if (oldFamily === undefined || oldFamily !== rows[i].family) {
-                    /*if(oldFamily !== undefined){
-                        if (level1 !== undefined){
-                            messageToSend = `${messageToSend}\n${level1}`;
-                        }
-                        if (level2 !== undefined){
-                            messageToSend = `${messageToSend} -> ${level2}`;
-                        }
-                        if (level3 !== undefined){
-                            messageToSend = `${messageToSend} -> ${level3}`;
-                        }
-                    }
-                        level1 = undefined;
-                        level2 = undefined;
-                        level3 = undefined;
-
-                    messageToSend = messageToSend + '\n__' + rows[i].family + ' Family__';
-    */
-                }
-
-
-                switch(rows[i].evolution_stage){
-                    case(1):
-                        if (level1 === undefined){
-                            level1 = rows[i].name+ ` (Gen ${rows[i].generation})`;
-                        }else{
-                            level1 = level1+'\n'+rows[i].name+ ` (Gen ${rows[i].generation})`;
-                        }
-                        break;
-                    case(2):
-                        if (level2 === undefined){
-                            level2 = rows[i].name+ ` (Gen ${rows[i].generation})`;
-                        }else{
-                            level2 = level2+'\n'+rows[i].name+ ` (Gen ${rows[i].generation})`;
-                        }
-                        break;
-                    case(3):
-                        if (level3 === undefined){
-                            level3 = rows[i].name+ ` (Gen ${rows[i].generation})`;
-                        }else{
-                            level3 = level3+'\n'+rows[i].name+ ` (Gen ${rows[i].generation})`;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                oldFamily = rows[i].family;
-            }
-            if (level1 !== undefined){
-                //messageToSend = `${messageToSend}\n${level1}`;
-                if (level3 === undefined && level2===undefined) {
-                    messageEmded.addField("Only Evolution", level1,false)
-                }else{
-                    messageEmded.addField("Base Evolution", level1,false)
-                }
-            }
-            if (level2 !== undefined){
-                //messageToSend = `${messageToSend} -> ${level2}`;
-                if (level3 === undefined) {
-                    messageEmded.addField("Top Evolution", level2,false)
-                }else{
-                    messageEmded.addField("Middle Evolution", level2,false)
-                }
-
-            }
-            if (level3 !== undefined){
-                //messageToSend = `${messageToSend} -> ${level3}`;
-                messageEmded.addField("Top Evolution", level3,false)
-
-            }
-            console.log(messageToSend);
-
-            messageEmded.description = messageToSend;
-
-            message.channel.send(messageEmded);
-        });
-
-        //connection.end();
-        console.log("Database connection closed")
-    }
+        message.channel.send(messageEmded);
+    });
+    console.log("Database connection closed")
+}
 
 
 
-    function loadPokemonArray(connection, query) {
+function loadPokemonArray(connection, query) {
 
-        connection.query(query, (err, rows) => {
-            if (err) throw err;
-            let count = 0;
-            for (let i in rows) {
-                pokemon.push(rows[i].name.toLowerCase());
-                pokemon_id.push(rows[i].dex_id);
-                count++;
-            }
-            console.log(`${count} Pokemon loaded into array for validation`);
-        });
-        connection.end();
+    connection.query(query, (err, rows) => {
+        if (err) throw err;
+        let count = 0;
+        for (let i in rows) {
+            pokemon.push(rows[i].name.toLowerCase());
+            pokemon_id.push(rows[i].dex_id);
+            count++;
+        }
+        console.log(`${count} Pokemon loaded into array for validation`);
+    });
+    connection.end();
 
-    }
-    function sentenceCase (str) {
-        if ((str===null) || (str===''))
-            return false;
-        else
-            str = str.toString();
-
-        return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-    }
+}
+function sentenceCase (str) {
+    if ((str===null) || (str===''))
+        return false;
+    else
+        str = str.toString();
+    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
 
 
 if (config.test){
