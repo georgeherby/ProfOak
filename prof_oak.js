@@ -153,7 +153,7 @@ function listeners(message) {
 function getSingleBoss(connection, pokeName, message) {
 
 
-    let query = `SELECT dex_id,name, capture_rate * 100 AS capture_rate,level_20_min, level_20_max,level_25_min, level_25_max, raid_cp, is_raid, IFNULL(weakness, "None") as weakness,IFNULL(double_weakness, "None") as double_weakness,IFNULL(resistance, "None") as resistance,IFNULL(double_resistance, "None") as double_resistance FROM pokedex where pokedex.name = '${pokeName}' AND in_game > 0`;
+    let query = `SELECT dex_id,name, capture_rate * 100 AS capture_rate,level_20_min, level_20_max,level_25_min, level_25_max, raid_cp, weather,is_raid, IFNULL(weakness, "None") as weakness,IFNULL(double_weakness, "None") as double_weakness,IFNULL(resistance, "None") as resistance,IFNULL(double_resistance, "None") as double_resistance FROM pokedex where pokedex.name = '${pokeName}' AND in_game > 0`;
     connection.query(query, (err, rows) => {
         let embed;
         for (let i in rows){
@@ -176,7 +176,7 @@ function getSingleBoss(connection, pokeName, message) {
                 }
 
                 embed.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
-                embed.setDescription(`**Raid CP:** ${rows[i].raid_cp}\\n**Min CP:** ${rows[i].level_20_min} **Boosted: **${rows[i].level_25_min}\n**Max CP:** ${rows[i].level_20_max} **Boosted: **${rows[i].level_25_max}\n**Capture Rate:** ${rows[i].capture_rate}%\n\n**Weakness: **${rows[i].weakness}\n**Double Weakness: **${rows[i].double_weakness}\n**Resistance: **${rows[i].resistance}\n**Double Resistance: **${rows[i].double_resistance}
+                embed.setDescription(`**Raid CP:** ${rows[i].raid_cp}\n**Boosted In: ** ${rows[i].weather}\n**Min CP:** ${rows[i].level_20_min} **Boosted: **${rows[i].level_25_min}\n**Max CP:** ${rows[i].level_20_max} **Boosted: **${rows[i].level_25_max}\n**Capture Rate:** ${rows[i].capture_rate}%\n\n**Weakness: **${rows[i].weakness}\n**Double Weakness: **${rows[i].double_weakness}\n**Resistance: **${rows[i].resistance}\n**Double Resistance: **${rows[i].double_resistance}
                 `);
                 message.channel.send(embed);
             }else{
