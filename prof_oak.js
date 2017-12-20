@@ -28,12 +28,14 @@ client.on('ready', () => {
 client.on('message', message => {
 
     if (message.channel.type === 'dm'){
-        let reg = new RegExp('!iv [0-9]+ [0-9]+');
+        let reg = new RegExp('!calc');
 
         if (message.content.match(reg)) {
-            let split = message.content.split(" ");
-            //!iv 9000 154 3504 dragonite
-            appraisal.getPokemonIv(message,split[1],split[2],split[3],split[4],client)
+            //let split = message.content.split(" ");
+
+            appraisal.getCoreDetailsFromUser(client,message,pokemon);
+
+
         }
     }else if (config.single_channel && (message.channel.name === config.single_channel_name)){
         listeners(message);
