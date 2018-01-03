@@ -28,15 +28,7 @@ client.on('ready', () => {
 client.on('message', message => {
 
     if (message.channel.type === 'dm'){
-        let reg = new RegExp('!calc');
 
-        if (message.content.match(reg)) {
-            //let split = message.content.split(" ");
-
-            appraisal.getCoreDetailsFromUser(client,message,pokemon);
-
-
-        }
     }else if (config.single_channel && (message.channel.name === config.single_channel_name)){
         listeners(message);
     }else if (!config.single_channel){
@@ -50,7 +42,10 @@ function listeners(message) {
     let messageContent = message.content.toLowerCase();
     if (messageContent.startsWith(config.prefix)) {
 
-        if ((pokemon.indexOf(messageContent.split(config.prefix)[1].toLowerCase()) > -1)) {
+        if(message.content.toLowerCase().match(new RegExp("![A-z0-9 ().'-]+ (((cp=[0-9]+ hp=[0-9]+ stardust=[0-9]+))|(cp=[0-9]+ stardust=[0-9]+ hp=[0-9]+)|(hp=[0-9]+ cp=[0-9]+ stardust=[0-9]+)|(hp=[0-9]+ stardust=[0-9]+ cp=[0-9]+)|(stardust=[0-9]+ hp=[0-9]+ cp=[0-9]+)|(stardust=[0-9]+ cp=[0-9]+ hp=[0-9]+))"))){
+            console.log('IV CHECK')
+            appraisal.getCoreDetailsFromUser(client,message)
+        }else if ((pokemon.indexOf(messageContent.split(config.prefix)[1].toLowerCase()) > -1)) {
             sendPokemonDetails(utils.createDbConnect(), message);
             deleteMessage(message);
         } else if ((pokemon_id.indexOf(parseInt(messageContent.split(config.prefix)[1])) > -1)) {

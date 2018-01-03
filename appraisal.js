@@ -4,20 +4,24 @@ const config = require("./config.json");
 module.exports = {
 
 
-    getCoreDetailsFromUser: function (client, message, pokemonNames) {
-        let startdust, hp, cp, name = 'BASE';
-        let counter = 0;
-        let split = message.split(" ");
+    getCoreDetailsFromUser: function (client, message) {
+        let messageContent = message.content.toLowerCase()
         //!iv 9000 154 3504 dragonite
+        //!dragonite cp=3504 hp=154 stardust=9000
 
-        getPokemonIv(message, split[1], split[2], split[3], split[4], client)
+        let hp = messageContent.split("hp=")[1].split(" ")[0];
+        let cp = messageContent.split("cp=")[1].split(" ")[0];
+        let stardust = messageContent.split("stardust=")[1].split(" ")[0];
+        let regex = new RegExp("( hp=)|( cp=)|( stardust=)");
+        let pokemon = messageContent.split("!")[1].split(regex)[0];
+
+        getPokemonIv(message, stardust, hp, cp, pokemon)
     }
 };
 
-function getPokemonIv (message, stardust, hp,cp,pokemon, client) {
+function getPokemonIv (message, stardust, hp,cp,pokemon) {
     let query = `SELECT level, cp_multiplier FROM pokemon_level where stardust = '${stardust}'`;
     let queryDetails = `SELECT pg_attack,pg_def,pg_stamina FROM pokedex where name = '${pokemon}' and in_game > 0`;
-
 
     query = `${query};${queryDetails}`;
     console.log(query);
@@ -26,8 +30,6 @@ function getPokemonIv (message, stardust, hp,cp,pokemon, client) {
     let possible_combinations = [];
 
     connection.query(query, function(err, results){
-
-
         console.log(1);
         let base_defence, base_attack, base_staminia = 0;
         let stats = results[1];
@@ -38,8 +40,6 @@ function getPokemonIv (message, stardust, hp,cp,pokemon, client) {
             base_attack = stats[j].pg_attack;
             console.log(`Base Defence: ${base_defence} Base Stamina: ${base_staminia} Base Attack: ${base_attack}`)
         }
-
-
         let levelInfo = results[0];
         for (let i in levelInfo) {
             // All possible pokemon levels
@@ -50,12 +50,11 @@ function getPokemonIv (message, stardust, hp,cp,pokemon, client) {
             }
         }
 
-
-
         levels.forEach(function (value){
-            console.log(value[0]);
-            console.log(value[1]);
-            console.log(value[2]);
+            console.log('----New Stamina and Level------');
+            console.log('Level ' + value[0]);
+            console.log('Ind Sta ' +value[1]);
+            console.log('CP Multipler ' +value[2]);
 
             for (let def = 0;def <= 15; def++){
                 let ind_att = getIndAttack(cp,base_defence,def,base_staminia,value[1],value[2],base_attack);
@@ -63,12 +62,11 @@ function getPokemonIv (message, stardust, hp,cp,pokemon, client) {
                 if (ind_att <= 15) {
                     console.log(ind_att);
                     if(isCorrectCP(base_staminia,value[1],base_defence,def,base_attack,ind_att,value[2],cp) && isCorrectHP(hp,base_staminia,value[1],value[2])) {
-                        console.log('Legal IV for CP.');
+                        console.log('Legal IV for CP');
                         possible_combinations.push([value[1], def, ind_att])
                     }
                 }
             }
-
         });
 
         let ivList = [];
@@ -96,11 +94,17 @@ function isCorrectCP(base_hp, inv_hp, base_def, inv_def, base_att, inv_att, cp_m
     let total = ((base_att + inv_att) * (Math.pow(base_def + inv_def,0.5)) * (Math.pow(base_hp + inv_hp,0.5) * Math.pow(cp_multi,2) ))/10;
 
     //return (cp - 1 <= total) && (total <= cp + 1);
+    console.log("Tested Total: " + total);
+    console.log("Tested CP: " + cp);
+
     return Math.trunc(total) === parseInt(cp)
 }
 
 function isCorrectHP(stamina, base_hp, inv_hp, cp_multi){
     //Stamina = (Base Stamina + Individual Stamina) * CP_Multiplier
+    console.log("Tested Stamina: " + stamina);
+    console.log("Tested Calc Stamina: " + ((base_hp + inv_hp) * cp_multi));
+
     return parseInt(stamina) === Math.trunc((base_hp + inv_hp) * cp_multi);
 }
 
@@ -109,6 +113,7 @@ function isCorrectHP(stamina, base_hp, inv_hp, cp_multi){
 function getIndStaminaFromHP(hp, cp_multiplier, base_staminia) {
     //Indiv =  Base Stamina -(Staminia/ CP Mutli)
     //return  parseFloat(((hp / cp_multiplier) - base_staminia).toFixed(0))
+    console.log(parseFloat(((hp / cp_multiplier) - base_staminia)))
     return  Math.ceil(parseFloat(((hp / cp_multiplier) - base_staminia)))
 
 
