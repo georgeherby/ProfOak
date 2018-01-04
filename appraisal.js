@@ -89,15 +89,21 @@ function getPokemonIv (message, stardust, hp,cp,pokemon) {
 }
 
 function isCorrectCP(base_hp, inv_hp, base_def, inv_def, base_att, inv_att, cp_multi, cp){
+    // var attackFactor = pokemon.attack + atkIV;
+    // var defenseFactor = Math.pow(pokemon.defense + defIV, 0.5)
+    // var staminaFactor = Math.pow((pokemon.stamina + staIV), 0.5);
+    // var scalarFactor = Math.pow(levelData.cpScalar, 2);
+    // return cp == parseInt(attackFactor * defenseFactor * staminaFactor * scalarFactor / 10, 10);
+
     //(Attack * Defense^0.5 * Stamina^0.5 * CP_Multiplier^2) / 10
 
     let total = ((base_att + inv_att) * (Math.pow(base_def + inv_def,0.5)) * (Math.pow(base_hp + inv_hp,0.5) * Math.pow(cp_multi,2) ))/10;
-
+    total = parseInt(total,10)
     //return (cp - 1 <= total) && (total <= cp + 1);
     console.log("Tested Total: " + total);
     console.log("Tested CP: " + cp);
 
-    return Math.trunc(total) === parseInt(cp)
+    return total === parseInt(cp)
 }
 
 function isCorrectHP(stamina, base_hp, inv_hp, cp_multi){
@@ -105,7 +111,10 @@ function isCorrectHP(stamina, base_hp, inv_hp, cp_multi){
     console.log("Tested Stamina: " + stamina);
     console.log("Tested Calc Stamina: " + ((base_hp + inv_hp) * cp_multi));
 
-    return parseInt(stamina) === Math.trunc((base_hp + inv_hp) * cp_multi);
+
+    //return parseInt(stamina) === parseInt(Math.floor((pokemon.stamina + iv) * levelData.cpScalar), 10);
+
+    return parseInt(stamina) === Math.floor(((base_hp + inv_hp) * cp_multi),10);
 }
 
 
