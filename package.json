@@ -9,6 +9,7 @@
   "author": "George Herbert",
   "license": "ISC",
   "dependencies": {
+    "ascii-table": "0.0.9",
     "discord.js": "^11.2.1",
     "mysql": "^2.15.0",
     "strict-mode": "^1.1.2"

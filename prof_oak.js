@@ -42,9 +42,9 @@ function listeners(message) {
     let messageContent = message.content.toLowerCase();
     if (messageContent.startsWith(config.prefix)) {
 
-        if(message.content.toLowerCase().match(new RegExp("![A-z0-9 ().'-]+ (((cp=[0-9]+ hp=[0-9]+ stardust=[0-9]+))|(cp=[0-9]+ stardust=[0-9]+ hp=[0-9]+)|(hp=[0-9]+ cp=[0-9]+ stardust=[0-9]+)|(hp=[0-9]+ stardust=[0-9]+ cp=[0-9]+)|(stardust=[0-9]+ hp=[0-9]+ cp=[0-9]+)|(stardust=[0-9]+ cp=[0-9]+ hp=[0-9]+))"))){
-            console.log('IV CHECK')
-            appraisal.getCoreDetailsFromUser(client,message)
+        if(message.content.toLowerCase().match(new RegExp("![A-z0-9 ().'-]+ (((cp=[0-9]+ hp=[0-9]+ stardust=[0-9]+))|(cp=[0-9]+ stardust=[0-9]+ hp=[0-9]+)|(hp=[0-9]+ cp=[0-9]+ stardust=[0-9]+)|(hp=[0-9]+ stardust=[0-9]+ cp=[0-9]+)|(stardust=[0-9]+ hp=[0-9]+ cp=[0-9]+)|(stardust=[0-9]+ cp=[0-9]+ hp=[0-9]+))( poweredup=(true|false))?"))){
+            console.log('IV CHECK');
+            appraisal.getCoreDetailsFromUser(client,message, pokemon, pokemon_id)
         }else if ((pokemon.indexOf(messageContent.split(config.prefix)[1].toLowerCase()) > -1)) {
             sendPokemonDetails(utils.createDbConnect(), message);
             deleteMessage(message);
@@ -69,7 +69,7 @@ function listeners(message) {
 
             }
             else {
-                message.channel.send("Invalid pokemon name");
+                utils.sendMessage(message,"Invalid pokemon name");
             }
 
         } else if (messageContent.startsWith(prefix+ "boss ")) {
@@ -100,24 +100,9 @@ function getSingleMonEgg(connection, pokeName, message) {
 
             if(rows[i].in_game  > 0 && rows[i].is_egg ===1) {
                 embed = new Discord.RichEmbed().setTitle(`${rows[i].name}`);
-                let imageID;
-                switch(rows[i].dex_id.length) {
-                    case 1:
-                        imageID = "00"+rows[i].dex_id;
-                        break;
-                    case 2:
-                        imageID = "0"+rows[i].dex_id;
-                        break;
-                    case 3:
-                        imageID = rows[i].dex_id;
-                        break;
-                    default:
-                        imageID = rows[i].dex_id;
-                }
-
-                embed.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
+                embed.setThumbnail(utils.getThumbnail(rows[i].dex_id));
                 embed.setDescription(`${rows[i].distance}km\n${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`);
-                message.channel.send(embed);
+                utils.sendEmbed(message,embed);
             }else{
                 //TODO Fix error message - issues with mega types
                 /*if (rows[i].in_game === 0 ){
@@ -134,10 +119,10 @@ function getSingleMonEgg(connection, pokeName, message) {
 
         if (notInGame === true || notInEgg ===true){
             if (notInGame){
-                message.channel.send("This pokemon is not in the game!");
+                utils.sendMessage(message,"This pokemon is not in the game!");
             }
             if (notInEgg){
-                message.channel.send("This pokemon is not in eggs");
+                utils.sendMessage(message,"This pokemon is not in eggs");
             }
         }
 
@@ -168,12 +153,12 @@ function getSingleBoss(connection, pokeName, message) {
                         imageID = rows[i].dex_id;
                 }
 
-                embed.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
+                embed.setThumbnail(utils.getThumbnail(rows[i].dex_id));
                 embed.setDescription(`**Min CP:** ${rows[i].level_20_min}\n**Max CP:** ${rows[i].level_20_max}\n**Capture Rate:** ${rows[i].capture_rate}%\n\n**Weakness: **${rows[i].weakness}\n**Double Weakness: **${rows[i].double_weakness}\n**Resistance: **${rows[i].resistance}\n**Double Resistance: **${rows[i].double_resistance}
                 `);
-                message.channel.send(embed);
+                utils.sendEmbed(message,embed);
             }else{
-                message.channel.send("This is not a boss!");
+                utils.sendMessage(message,"This is not a boss!");
             }
         }
     });
@@ -191,7 +176,7 @@ function getBossTierList(connection, level, message) {
                 embed.addField(`${rows[i].name}${rows[i].is_raid === 2 ? " - Not Active" : ""}`, `**Min CP:** ${rows[i].level_20_min}\n**Max CP:** ${rows[i].level_20_max}\n**Capture Rate:** ${rows[i].capture_rate}%`, true);
                 unsent = true;
             }else if (parseInt(i) === limit){
-                message.channel.send(embed);
+                utils.sendEmbed(message,embed);
                 limit = limit + 25;
                 embed = new Discord.RichEmbed().setTitle(`${level} Raid Boss Chart cont.`);
                 embed.addField(`${rows[i].name}${rows[i].is_raid === 2 ? " - Not Active" : ""}`, `**Min CP:** ${rows[i].level_20_min}\n**Max CP:** ${rows[i].level_20_max}\n**Capture Rate:** ${rows[i].capture_rate}%`, true);
@@ -202,7 +187,7 @@ function getBossTierList(connection, level, message) {
             }
         }
         if (unsent){
-            message.channel.send(embed);
+            utils.sendEmbed(message,embed);
         }
     });
 }
@@ -220,7 +205,7 @@ function getDistanceChart(connection, distance, message) {
                 embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
                 unsent = true;
             }else if (parseInt(i) === limit){
-                message.channel.send(embed);
+                utils.sendEmbed(message,embed);
                 limit = limit + 25;
                 embed = new Discord.RichEmbed().setTitle(`${distance}km Egg Chart cont.`);
                 embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
@@ -231,7 +216,7 @@ function getDistanceChart(connection, distance, message) {
             }
         }
         if (unsent){
-            message.channel.send(embed);
+            utils.sendEmbed(message,embed);
         }
     });
 }
@@ -276,7 +261,7 @@ function sendPokemonDetails(connection, message) {
                     imageID = rows[i].dex_id;
             }
 
-            messageEmded.setThumbnail(`https://assets.pokemon.com/assets/cms2/img/pokedex/detail/${imageID}.png`);
+            messageEmded.setThumbnail(utils.getThumbnail(rows[i].dex_id));
             if (rows[i].form === null) {
                 //Base Form
                 lastForm = rows[i].form;
@@ -383,7 +368,7 @@ function sendPokemonDetails(connection, message) {
 
         messageEmded.description = messageToSend;
 
-        message.channel.send(messageEmded);
+        utils.sendEmbed(message,messageEmded);
     });
     console.log("Database connection closed")
 }
