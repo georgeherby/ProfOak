@@ -1,5 +1,5 @@
 # Prof Oak
-See Wiki for all the commands you need for Eggs, Raids, IV and general pokemon information.
+See Wiki [here](https://github.com/georgeherby/ProfOak/wiki) for all the commands you need for Eggs, Raids, IV and general pokemon information.
 
 
 This Discord bot gives you detailed infomration for all Pokemon. It also contains an IV checker for those who want quick IV details through Discord.
