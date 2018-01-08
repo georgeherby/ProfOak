@@ -104,7 +104,7 @@ function getPokemonIv (message, pokemonNameArray,pokemonIdArray, stardust, hp,cp
 
             let table = AsciiTable.factory({
                 //title: `IV For ${pokemon}`,
-                heading: ['Level', 'Attack', 'Defence', 'Stamina', 'Total'],
+                heading: ['Lvl', 'Att', 'Def', 'Sta', 'Tot'],
                 rows: rows
             });
 
