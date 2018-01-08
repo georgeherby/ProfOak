@@ -98,13 +98,13 @@ function getPokemonIv (message, pokemonNameArray,pokemonIdArray, stardust, hp,cp
 
             let rows = [];
             for (let i in potentialIVs) {
-                rows.push([potentialIVs[i].atkIV, potentialIVs[i].defIV, potentialIVs[i].staIV, `${potentialIVs[i].perfection}%`])
+                rows.push([potentialIVs].level, [potentialIVs[i].atkIV, potentialIVs[i].defIV, potentialIVs[i].staIV, `${potentialIVs[i].perfection}%`])
             }
 
 
             let table = AsciiTable.factory({
                 //title: `IV For ${pokemon}`,
-                heading: ['Attack', 'Defence', 'Stamina', 'Total'],
+                heading: ['Level', 'Attack', 'Defence', 'Stamina', 'Total'],
                 rows: rows
             });
 
