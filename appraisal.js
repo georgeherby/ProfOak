@@ -98,7 +98,7 @@ function getPokemonIv (message, pokemonNameArray,pokemonIdArray, stardust, hp,cp
 
             let rows = [];
             for (let i in potentialIVs) {
-                rows.push([potentialIVs].level, [potentialIVs[i].atkIV, potentialIVs[i].defIV, potentialIVs[i].staIV, `${potentialIVs[i].perfection}%`])
+                rows.push([potentialIVs[i].level, potentialIVs[i].atkIV, potentialIVs[i].defIV, potentialIVs[i].staIV, `${potentialIVs[i].perfection}%`])
             }
 
 
