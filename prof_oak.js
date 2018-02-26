@@ -80,6 +80,8 @@ function listeners(message) {
             } else if (split[1].match("[1-5]")) {
                 console.log("Tier Boss List")
                 getBossTierList(utils.createDbConnect(),split[1],message);
+            }else{
+                utils.sendMessage(message,"Invalid boss name");
             }
         }
     }
