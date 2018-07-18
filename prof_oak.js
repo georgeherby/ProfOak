@@ -57,7 +57,7 @@ function listeners(message) {
             if (pokemon.indexOf(split[1]) > -1) {
                 console.log("Get specific details")
                 getSingleMonEgg(utils.createDbConnect(), split[1], message);
-            } else if (split[1].match("(2|5|10)(km)?")) {
+            } else if (split[1].match("(2|5|7|10)(km)?")) {
                 let distance;
                 if (split[1].endsWith("km")) {
                     distance = split[1].substr(0, split[1].length - 2);
@@ -103,7 +103,7 @@ function getSingleMonEgg(connection, pokeName, message) {
             if(rows[i].in_game  > 0 && rows[i].is_egg ===1) {
                 embed = new Discord.RichEmbed().setTitle(`${rows[i].name}`);
                 embed.setThumbnail(utils.getThumbnail(rows[i].dex_id));
-                embed.setDescription(`${rows[i].distance}km\n${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`);
+                embed.setDescription(`${rows[i].distance}km\n${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${rows[i].shiny === 1 ? "<:sparkles:468894032274391042>Shiny<:sparkles:468894032274391042>" : ""}`);
                 utils.sendEmbed(message,embed);
             }else{
                 //TODO Fix error message - issues with mega types
@@ -206,16 +206,16 @@ function getDistanceChart(connection, distance, message) {
         let limit = 25;
         for (let i in rows) {
             if (i < limit) {
-                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
+                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${rows[i].shiny === 1 ? "<:sparkles:468894032274391042>Shiny<:sparkles:468894032274391042>" : ""}`, true);
                 unsent = true;
             }else if (parseInt(i) === limit){
                 utils.sendEmbed(message,embed);
                 limit = limit + 25;
                 embed = new Discord.RichEmbed().setTitle(`${distance}km Egg Chart cont.`);
-                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
+                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${rows[i].shiny === 1 ? "<:sparkles:468894032274391042>Shiny<:sparkles:468894032274391042>" : ""}`, true);
                 unsent = true;
             }else{
-                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${sentenceCase(rows[i].rareity)}\n${rows[i].shiny === 1 ? "Shiny" : ""}`, true);
+                embed.addField(`${rows[i].name}`, `${rows[i].level_20_min} to ${rows[i].level_20_max} CP\n${rows[i].shiny === 1 ? "<:sparkles:468894032274391042>Shiny<:sparkles:468894032274391042>" : ""}`, true);
                 unsent = true;
             }
         }
