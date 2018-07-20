@@ -10,8 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "ascii-table": "0.0.9",
-    "discord.js": "^11.2.1",
-    "mysql": "^2.15.0",
+    "discord.js": "^11.3.2",
+    "mysql": "^2.16.0",
+    "prettier": "^1.13.7",
     "strict-mode": "^1.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/georgeherby/ProfOak.git"
   }
 }
